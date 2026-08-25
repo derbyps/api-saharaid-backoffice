@@ -1,4 +1,4 @@
-import { SignJWT, jwtVerify } from "jose";
+import { jwtVerify, SignJWT } from "npm:jose@^6.2.10";
 import { response } from "./response.ts";
 
 const ALGORITHM = "HS256";
@@ -21,7 +21,7 @@ function getSigningKey(): Uint8Array {
   return new TextEncoder().encode(secret);
 }
 
-async function signToken(
+function signToken(
   claims: TokenClaims,
   expiresInSeconds: number,
 ): Promise<string> {
@@ -37,14 +37,20 @@ export function signAccessToken(
   userId: string,
   email: string,
 ): Promise<string> {
-  return signToken({ sub: userId, email, type: "access" }, ACCESS_TOKEN_TTL_SECONDS);
+  return signToken(
+    { sub: userId, email, type: "access" },
+    ACCESS_TOKEN_TTL_SECONDS,
+  );
 }
 
 export function signRefreshToken(
   userId: string,
   email: string,
 ): Promise<string> {
-  return signToken({ sub: userId, email, type: "refresh" }, REFRESH_TOKEN_TTL_SECONDS);
+  return signToken(
+    { sub: userId, email, type: "refresh" },
+    REFRESH_TOKEN_TTL_SECONDS,
+  );
 }
 
 export async function verifyToken(

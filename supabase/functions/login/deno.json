@@ -3,6 +3,7 @@
     "lib": ["deno.window"]
   },
   "imports": {
-    "jose": "npm:jose@^5"
+    "jose": "npm:jose@^6.2.10",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
   }
 }

@@ -26,31 +26,6 @@ type ParticipantPayload = {
   degree_certificate: string;
 };
 
-const requiredFields: Array<keyof ParticipantPayload> = [
-  "id",
-  "name",
-  "identity_number",
-  "gender",
-  "phone_number",
-  "email",
-  "date_of_birth",
-  "religion",
-  "address",
-  "job_position",
-  "job_company",
-  "education",
-  "cr_number",
-  "passport_photo",
-  "identity_card",
-  "tax_number",
-  "curiculum_vitae",
-  "employment_certificate",
-  "medical_certificate",
-  "integrity_pact",
-  "degree_certificate",
-];
-
-
 function validateParticipantPayload(payload: unknown): ParticipantPayload | string {
   if (!payload || typeof payload !== "object") {
     return "Request body must be a JSON object";
