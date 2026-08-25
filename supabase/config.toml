@@ -24,6 +24,6 @@ entrypoint = "./functions/files/index.ts"
 
 [functions.participant]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/participant/deno.json"
 entrypoint = "./functions/participant/index.ts"

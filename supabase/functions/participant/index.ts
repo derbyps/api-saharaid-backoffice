@@ -68,6 +68,11 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const accessTokenSubject = await requireAccessTokenSubject(req);
+    if (accessTokenSubject instanceof Response) {
+      return accessTokenSubject;
+    }
+
     if (req.method === "GET") {
       const url = new URL(req.url);
       const idParam = url.searchParams.get("id");
@@ -111,11 +116,6 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === "POST") {
-      const createdBy = await requireAccessTokenSubject(req);
-      if (createdBy instanceof Response) {
-        return createdBy;
-      }
-
       const payload = validateParticipantPayload(await req.json());
 
       if (typeof payload === "string") {
@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
         .from("participants")
         .insert({
           ...payload,
-          created_by: createdBy,
+          created_by: accessTokenSubject,
           created_at: new Date().toISOString(),
         })
         .select("*")
@@ -142,11 +142,6 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === "DELETE") {
-      const deletedBy = await requireAccessTokenSubject(req);
-      if (deletedBy instanceof Response) {
-        return deletedBy;
-      }
-
       const url = new URL(req.url);
       const idParam = url.searchParams.get("id");
 
@@ -164,7 +159,7 @@ Deno.serve(async (req) => {
         .update({
           is_deleted: true,
           deleted_at: new Date().toISOString(),
-          deleted_by: deletedBy,
+          deleted_by: accessTokenSubject,
         })
         .eq("id", id)
         .eq("is_deleted", false)
@@ -183,11 +178,6 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === "PUT") {
-      const updatedBy = await requireAccessTokenSubject(req);
-      if (updatedBy instanceof Response) {
-        return updatedBy;
-      }
-
       const url = new URL(req.url);
       const idParam = url.searchParams.get("id");
 
@@ -211,7 +201,7 @@ Deno.serve(async (req) => {
         .update({
           ...payload,
           updated_at: new Date().toISOString(),
-          updated_by: updatedBy,
+          updated_by: accessTokenSubject,
         })
         .eq("id", id)
         .eq("is_deleted", false)
