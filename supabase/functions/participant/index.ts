@@ -1,3 +1,4 @@
+import { verifyToken } from "../_shared/auth.ts";
 import { optionsResponse, response } from "../_shared/response.ts";
 import { supabase } from "../_shared/supabase.ts";
 
@@ -64,21 +65,6 @@ function validateParticipantPayload(payload: unknown): ParticipantPayload | stri
     return "id must be an integer";
   }
 
-  for (const field of requiredFields) {
-    if (field === "id") {
-      continue;
-    }
-
-    if (!isNonEmptyString(participant[field])) {
-      return `${field} is required`;
-    }
-  }
-
-  const parsedDate = new Date(String(participant.date_of_birth));
-  if (Number.isNaN(parsedDate.getTime())) {
-    return "date_of_birth must be a valid date";
-  }
-
   return {
     id: participant.id as number,
     name: String(participant.name).trim(),
@@ -104,6 +90,26 @@ function validateParticipantPayload(payload: unknown): ParticipantPayload | stri
   };
 }
 
+async function getAccessTokenSubject(req: Request): Promise<string | Response> {
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+
+  if (!token) {
+    return response(401, { error: "Missing access token" }, "UNAUTHORIZED");
+  }
+
+  try {
+    const claims = await verifyToken(token, "access");
+    return claims.sub;
+  } catch {
+    return response(
+      401,
+      { error: "Invalid or expired token" },
+      "UNAUTHORIZED",
+    );
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return optionsResponse();
@@ -125,6 +131,7 @@ Deno.serve(async (req) => {
           .from("participants")
           .select("*")
           .eq("id", id)
+          .eq("is_deleted", false)
           .maybeSingle();
 
         if (error) {
@@ -141,6 +148,7 @@ Deno.serve(async (req) => {
       const { data: participants, error } = await supabase
         .from("participants")
         .select("*")
+        .eq("is_deleted", false)
         .order("id", { ascending: true });
 
       if (error) {
@@ -151,6 +159,11 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === "POST") {
+      const createdBy = await getAccessTokenSubject(req);
+      if (createdBy instanceof Response) {
+        return createdBy;
+      }
+
       const payload = validateParticipantPayload(await req.json());
 
       if (typeof payload === "string") {
@@ -159,7 +172,11 @@ Deno.serve(async (req) => {
 
       const { data: participant, error } = await supabase
         .from("participants")
-        .insert(payload)
+        .insert({
+          ...payload,
+          created_by: createdBy,
+          created_at: new Date().toISOString(),
+        })
         .select("*")
         .single();
 
@@ -170,6 +187,94 @@ Deno.serve(async (req) => {
       }
 
       return response(201, { participant });
+    }
+
+    if (req.method === "DELETE") {
+      const deletedBy = await getAccessTokenSubject(req);
+      if (deletedBy instanceof Response) {
+        return deletedBy;
+      }
+
+      const url = new URL(req.url);
+      const idParam = url.searchParams.get("id");
+
+      if (!idParam) {
+        return response(400, { error: "id is required" }, "INVALID_REQUEST");
+      }
+
+      const id = Number(idParam);
+      if (!Number.isInteger(id)) {
+        return response(400, { error: "id must be an integer" }, "INVALID_REQUEST");
+      }
+
+      const { data: participant, error } = await supabase
+        .from("participants")
+        .update({
+          is_deleted: true,
+          deleted_at: new Date().toISOString(),
+          deleted_by: deletedBy,
+        })
+        .eq("id", id)
+        .eq("is_deleted", false)
+        .select("*")
+        .maybeSingle();
+
+      if (error) {
+        return response(500, { error: error.message }, "DATABASE_ERROR");
+      }
+
+      if (!participant) {
+        return response(404, { error: "Participant not found" }, "NOT_FOUND");
+      }
+
+      return response(200, { participant });
+    }
+
+    if (req.method === "PUT") {
+      const updatedBy = await getAccessTokenSubject(req);
+      if (updatedBy instanceof Response) {
+        return updatedBy;
+      }
+
+      const url = new URL(req.url);
+      const idParam = url.searchParams.get("id");
+
+      if (!idParam) {
+        return response(400, { error: "id is required" }, "INVALID_REQUEST");
+      }
+
+      const id = Number(idParam);
+      if (!Number.isInteger(id)) {
+        return response(400, { error: "id must be an integer" }, "INVALID_REQUEST");
+      }
+
+      const payload = validateParticipantPayload(await req.json());
+
+      if (typeof payload === "string") {
+        return response(400, { error: payload }, "INVALID_REQUEST");
+      }
+
+      const { data: participant, error } = await supabase
+        .from("participants")
+        .update({
+          ...payload,
+          updated_at: new Date().toISOString(),
+          updated_by: updatedBy,
+        })
+        .eq("id", id)
+        .eq("is_deleted", false)
+        .select("*")
+        .maybeSingle();
+
+      if (error) {
+        return response(500, { error: error.message }, "DATABASE_ERROR");
+      }
+
+      if (!participant) {
+        return response(404, { error: "Participant not found" }, "NOT_FOUND");
+      }
+
+      return response(200, { participant });
     }
 
     return response(405, { error: "Method not allowed" }, "METHOD_NOT_ALLOWED");

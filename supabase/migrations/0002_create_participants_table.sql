@@ -20,5 +20,11 @@ create table if not exists public.participants (
   medical_certificate text not null,
   integrity_pact text not null,
   degree_certificate text not null,
-  created_at timestamptz not null default now()
+  is_deleted boolean not null default false,
+  deleted_at timestamptz,
+  deleted_by uuid,
+  created_at timestamptz not null default now(),
+  created_by uuid not null,
+  updated_at timestamptz,
+  updated_by uuid
 );
