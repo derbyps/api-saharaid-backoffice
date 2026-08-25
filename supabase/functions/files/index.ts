@@ -1,4 +1,4 @@
-import { verifyToken } from "../_shared/auth.ts";
+import { requireTokenClaims } from "../_shared/auth.ts";
 import { optionsResponse, response } from "../_shared/response.ts";
 import {
   createPresignedDownloadUrl,
@@ -29,21 +29,9 @@ Deno.serve(async (req) => {
     );
   }
 
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-
-  if (!token) {
-    return response(401, { error: "Missing access token" }, "UNAUTHORIZED");
-  }
-
-  try {
-    await verifyToken(token, "access");
-  } catch {
-    return response(
-      401,
-      { error: "Invalid or expired token" },
-      "UNAUTHORIZED",
-    );
+  const claims = await requireTokenClaims(req, "access");
+  if (claims instanceof Response) {
+    return claims;
   }
 
   const action = new URL(req.url).pathname.split("/").filter(Boolean).pop();

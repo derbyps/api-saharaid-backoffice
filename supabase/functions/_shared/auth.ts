@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
+import { response } from "./response.ts";
 
 const ALGORITHM = "HS256";
 export const ACCESS_TOKEN_TTL_SECONDS = 60 * 60 * 24; // 1 day
@@ -58,4 +59,37 @@ export async function verifyToken(
     throw new Error(`Expected ${expectedType} token`);
   }
   return claims;
+}
+
+export function getBearerToken(req: Request): string | null {
+  const authHeader = req.headers.get("authorization");
+  return authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+}
+
+export async function requireTokenClaims(
+  req: Request,
+  expectedType: TokenType = "access",
+): Promise<TokenClaims | Response> {
+  const token = getBearerToken(req);
+
+  if (!token) {
+    return response(401, { error: "Missing access token" }, "UNAUTHORIZED");
+  }
+
+  try {
+    return await verifyToken(token, expectedType);
+  } catch {
+    return response(
+      401,
+      { error: "Invalid or expired token" },
+      "UNAUTHORIZED",
+    );
+  }
+}
+
+export async function requireAccessTokenSubject(
+  req: Request,
+): Promise<string | Response> {
+  const claims = await requireTokenClaims(req, "access");
+  return claims instanceof Response ? claims : claims.sub;
 }

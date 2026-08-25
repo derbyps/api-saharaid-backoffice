@@ -1,4 +1,4 @@
-import { verifyToken } from "../_shared/auth.ts";
+import { requireAccessTokenSubject } from "../_shared/auth.ts";
 import { optionsResponse, response } from "../_shared/response.ts";
 import { supabase } from "../_shared/supabase.ts";
 
@@ -50,9 +50,6 @@ const requiredFields: Array<keyof ParticipantPayload> = [
   "degree_certificate",
 ];
 
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim() !== "";
-}
 
 function validateParticipantPayload(payload: unknown): ParticipantPayload | string {
   if (!payload || typeof payload !== "object") {
@@ -88,26 +85,6 @@ function validateParticipantPayload(payload: unknown): ParticipantPayload | stri
     integrity_pact: String(participant.integrity_pact).trim(),
     degree_certificate: String(participant.degree_certificate).trim(),
   };
-}
-
-async function getAccessTokenSubject(req: Request): Promise<string | Response> {
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-
-  if (!token) {
-    return response(401, { error: "Missing access token" }, "UNAUTHORIZED");
-  }
-
-  try {
-    const claims = await verifyToken(token, "access");
-    return claims.sub;
-  } catch {
-    return response(
-      401,
-      { error: "Invalid or expired token" },
-      "UNAUTHORIZED",
-    );
-  }
 }
 
 Deno.serve(async (req) => {
@@ -159,7 +136,7 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === "POST") {
-      const createdBy = await getAccessTokenSubject(req);
+      const createdBy = await requireAccessTokenSubject(req);
       if (createdBy instanceof Response) {
         return createdBy;
       }
@@ -190,7 +167,7 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === "DELETE") {
-      const deletedBy = await getAccessTokenSubject(req);
+      const deletedBy = await requireAccessTokenSubject(req);
       if (deletedBy instanceof Response) {
         return deletedBy;
       }
@@ -231,7 +208,7 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === "PUT") {
-      const updatedBy = await getAccessTokenSubject(req);
+      const updatedBy = await requireAccessTokenSubject(req);
       if (updatedBy instanceof Response) {
         return updatedBy;
       }
