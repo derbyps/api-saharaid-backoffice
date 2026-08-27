@@ -27,3 +27,9 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/participant/deno.json"
 entrypoint = "./functions/participant/index.ts"
+
+[functions.course-type]
+enabled = true
+verify_jwt = false
+import_map = "./functions/course-type/deno.json"
+entrypoint = "./functions/course-type/index.ts"
