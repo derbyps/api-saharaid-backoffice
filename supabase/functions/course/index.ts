@@ -21,16 +21,16 @@ Deno.serve(async (req) => {
       return accessTokenSubject;
     }
 
-    const { data: courseModes, error } = await supabase
-      .from("course_mode")
-      .select("id, name")
+    const { data: courses, error } = await supabase
+      .from("course")
+      .select("*")
       .order("name", { ascending: true });
 
     if (error) {
       return response(500, { error: error.message }, "DATABASE_ERROR");
     }
 
-    return response(200, { courseModes });
+    return response(200, { courses });
   } catch (err) {
     return response(
       500,
