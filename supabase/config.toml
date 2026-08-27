@@ -28,14 +28,14 @@ verify_jwt = false
 import_map = "./functions/participant/deno.json"
 entrypoint = "./functions/participant/index.ts"
 
-[functions.course-type]
+[functions.course_type]
 enabled = true
 verify_jwt = false
-import_map = "./functions/course-type/deno.json"
-entrypoint = "./functions/course-type/index.ts"
+import_map = "./functions/course_type/deno.json"
+entrypoint = "./functions/course_type/index.ts"
 
-[functions.course-mode]
+[functions.course_mode]
 enabled = true
 verify_jwt = false
-import_map = "./functions/course-mode/deno.json"
-entrypoint = "./functions/course-mode/index.ts"
+import_map = "./functions/course_mode/deno.json"
+entrypoint = "./functions/course_mode/index.ts"
