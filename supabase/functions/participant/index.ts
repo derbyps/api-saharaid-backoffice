@@ -3,7 +3,6 @@ import { optionsResponse, response } from "../_shared/response.ts";
 import { supabase } from "../_shared/supabase.ts";
 
 type ParticipantPayload = {
-  id: number;
   name: string;
   identity_number: string;
   gender: string;
@@ -26,6 +25,12 @@ type ParticipantPayload = {
   degree_certificate: string;
 };
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string): boolean {
+  return UUID_PATTERN.test(value);
+}
+
 function validateParticipantPayload(payload: unknown): ParticipantPayload | string {
   if (!payload || typeof payload !== "object") {
     return "Request body must be a JSON object";
@@ -33,12 +38,7 @@ function validateParticipantPayload(payload: unknown): ParticipantPayload | stri
 
   const participant = payload as Record<string, unknown>;
 
-  if (!Number.isInteger(participant.id)) {
-    return "id must be an integer";
-  }
-
   return {
-    id: participant.id as number,
     name: String(participant.name).trim(),
     identity_number: String(participant.identity_number).trim(),
     gender: String(participant.gender).trim(),
@@ -78,16 +78,14 @@ Deno.serve(async (req) => {
       const idParam = url.searchParams.get("id");
 
       if (idParam) {
-        const id = Number(idParam);
-
-        if (!Number.isInteger(id)) {
-          return response(400, { error: "id must be an integer" }, "INVALID_REQUEST");
+        if (!isUuid(idParam)) {
+          return response(400, { error: "id must be a UUID" }, "INVALID_REQUEST");
         }
 
         const { data: participant, error } = await supabase
           .from("participants")
           .select("*")
-          .eq("id", id)
+          .eq("id", idParam)
           .eq("is_deleted", false)
           .maybeSingle();
 
@@ -106,13 +104,18 @@ Deno.serve(async (req) => {
         .from("participants")
         .select("*")
         .eq("is_deleted", false)
-        .order("id", { ascending: true });
+        .order("created_at", { ascending: true });
 
       if (error) {
         return response(500, { error: error.message }, "DATABASE_ERROR");
       }
 
-      return response(200, { participants });
+      return response(200, {
+        participants: (participants ?? []).map((participant, index) => ({
+          index: index + 1,
+          ...participant,
+        })),
+      });
     }
 
     if (req.method === "POST") {
@@ -149,9 +152,8 @@ Deno.serve(async (req) => {
         return response(400, { error: "id is required" }, "INVALID_REQUEST");
       }
 
-      const id = Number(idParam);
-      if (!Number.isInteger(id)) {
-        return response(400, { error: "id must be an integer" }, "INVALID_REQUEST");
+      if (!isUuid(idParam)) {
+        return response(400, { error: "id must be a UUID" }, "INVALID_REQUEST");
       }
 
       const { data: participant, error } = await supabase
@@ -161,7 +163,7 @@ Deno.serve(async (req) => {
           deleted_at: new Date().toISOString(),
           deleted_by: accessTokenSubject,
         })
-        .eq("id", id)
+        .eq("id", idParam)
         .eq("is_deleted", false)
         .select("*")
         .maybeSingle();
@@ -185,9 +187,8 @@ Deno.serve(async (req) => {
         return response(400, { error: "id is required" }, "INVALID_REQUEST");
       }
 
-      const id = Number(idParam);
-      if (!Number.isInteger(id)) {
-        return response(400, { error: "id must be an integer" }, "INVALID_REQUEST");
+      if (!isUuid(idParam)) {
+        return response(400, { error: "id must be a UUID" }, "INVALID_REQUEST");
       }
 
       const payload = validateParticipantPayload(await req.json());
@@ -203,7 +204,7 @@ Deno.serve(async (req) => {
           updated_at: new Date().toISOString(),
           updated_by: accessTokenSubject,
         })
-        .eq("id", id)
+        .eq("id", idParam)
         .eq("is_deleted", false)
         .select("*")
         .maybeSingle();
