@@ -18,7 +18,7 @@ function sanitizeFilename(filename: string): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return optionsResponse();
+    return optionsResponse(req);
   }
 
   if (req.method !== "POST") {
@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
       405,
       { error: "Method not allowed" },
       "METHOD_NOT_ALLOWED",
+      req,
     );
   }
 
@@ -45,6 +46,7 @@ Deno.serve(async (req) => {
           400,
           { error: "filename is required" },
           "INVALID_REQUEST",
+          req,
         );
       }
 
@@ -57,7 +59,7 @@ Deno.serve(async (req) => {
         key,
         uploadUrl,
         expiresIn: UPLOAD_URL_TTL_SECONDS,
-      });
+      }, undefined, req);
     }
 
     if (action === "presign-download") {
@@ -68,6 +70,7 @@ Deno.serve(async (req) => {
           400,
           { error: "key is required" },
           "INVALID_REQUEST",
+          req,
         );
       }
 
@@ -76,13 +79,14 @@ Deno.serve(async (req) => {
       return response(200, {
         downloadUrl,
         expiresIn: DOWNLOAD_URL_TTL_SECONDS,
-      });
+      }, undefined, req);
     }
 
     return response(
       404,
       { error: "Unknown action, use presign-upload or presign-download" },
       "NOT_FOUND",
+      req,
     );
   } catch (err) {
     return response(
@@ -91,6 +95,7 @@ Deno.serve(async (req) => {
         error: err instanceof Error ? err.message : "Internal server error",
       },
       "INTERNAL_SERVER_ERROR",
+      req,
     );
   }
 });

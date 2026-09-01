@@ -57,7 +57,7 @@ function validateSchedulePayload(payload: unknown): SchedulePayload | string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return optionsResponse();
+    return optionsResponse(req);
   }
 
   try {

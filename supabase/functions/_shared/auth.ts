@@ -79,7 +79,7 @@ export async function requireTokenClaims(
   const token = getBearerToken(req);
 
   if (!token) {
-    return response(401, { error: "Missing access token" }, "UNAUTHORIZED");
+    return response(401, { error: "Missing access token" }, "UNAUTHORIZED", req);
   }
 
   try {
@@ -89,6 +89,7 @@ export async function requireTokenClaims(
       401,
       { error: "Invalid or expired token" },
       "UNAUTHORIZED",
+      req,
     );
   }
 }

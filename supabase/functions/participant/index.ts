@@ -49,7 +49,7 @@ function validateParticipantPayload(payload: unknown): ParticipantPayload | stri
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return optionsResponse();
+    return optionsResponse(req);
   }
 
   try {

@@ -4,7 +4,7 @@ import { supabase } from "../_shared/supabase.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return optionsResponse();
+    return optionsResponse(req);
   }
 
   if (req.method !== "GET") {
@@ -12,6 +12,7 @@ Deno.serve(async (req) => {
       405,
       { error: "Method not allowed" },
       "METHOD_NOT_ALLOWED",
+      req,
     );
   }
 
@@ -27,10 +28,10 @@ Deno.serve(async (req) => {
       .order("name", { ascending: true });
 
     if (error) {
-      return response(500, { error: error.message }, "DATABASE_ERROR");
+      return response(500, { error: error.message }, "DATABASE_ERROR", req);
     }
 
-    return response(200, { courses });
+    return response(200, { courses }, undefined, req);
   } catch (err) {
     return response(
       500,
@@ -38,6 +39,7 @@ Deno.serve(async (req) => {
         error: err instanceof Error ? err.message : "Internal server error",
       },
       "INTERNAL_SERVER_ERROR",
+      req,
     );
   }
 });

@@ -4,7 +4,7 @@ import { generateSalt, hashPassword } from "../_shared/crypto.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return optionsResponse();
+    return optionsResponse(req);
   }
 
   if (req.method !== "POST") {
@@ -12,6 +12,7 @@ Deno.serve(async (req) => {
       405,
       { error: "Method not allowed" },
       "METHOD_NOT_ALLOWED",
+      req,
     );
   }
 
@@ -23,6 +24,7 @@ Deno.serve(async (req) => {
         400,
         { error: "name, email, password are required" },
         "INVALID_REQUEST",
+        req,
       );
     }
 
@@ -40,6 +42,7 @@ Deno.serve(async (req) => {
         500,
         { error: existingUserError.message },
         "DATABASE_ERROR",
+        req,
       );
     }
 
@@ -48,6 +51,7 @@ Deno.serve(async (req) => {
         409,
         { error: "Email already exists" },
         "EMAIL_ALREADY_EXISTS",
+        req,
       );
     }
 
@@ -70,12 +74,13 @@ Deno.serve(async (req) => {
         500,
         { error: error.message },
         "DATABASE_ERROR",
+        req,
       );
     }
 
     return response(201, {
       user,
-    });
+    }, undefined, req);
   } catch (err) {
     return response(
       500,
@@ -83,6 +88,7 @@ Deno.serve(async (req) => {
         error: err instanceof Error ? err.message : "Internal server error",
       },
       "INTERNAL_SERVER_ERROR",
+      req,
     );
   }
 });

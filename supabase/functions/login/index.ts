@@ -5,7 +5,7 @@ import { signAccessToken, signRefreshToken } from "../_shared/auth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return optionsResponse();
+    return optionsResponse(req);
   }
 
   if (req.method !== "POST") {
@@ -13,6 +13,7 @@ Deno.serve(async (req) => {
       405,
       { error: "Method not allowed" },
       "METHOD_NOT_ALLOWED",
+      req,
     );
   }
 
@@ -24,6 +25,7 @@ Deno.serve(async (req) => {
         400,
         { error: "email, password are required" },
         "INVALID_REQUEST",
+        req,
       );
     }
 
@@ -40,6 +42,7 @@ Deno.serve(async (req) => {
         500,
         { error: error.message },
         "DATABASE_ERROR",
+        req,
       );
     }
 
@@ -53,6 +56,7 @@ Deno.serve(async (req) => {
         401,
         { error: "Invalid email or password" },
         "INVALID_CREDENTIALS",
+        req,
       );
     }
 
@@ -69,7 +73,7 @@ Deno.serve(async (req) => {
       },
       token,
       refreshToken,
-    });
+    }, undefined, req);
   } catch (err) {
     return response(
       500,
@@ -77,6 +81,7 @@ Deno.serve(async (req) => {
         error: err instanceof Error ? err.message : "Internal server error",
       },
       "INTERNAL_SERVER_ERROR",
+      req,
     );
   }
 });
