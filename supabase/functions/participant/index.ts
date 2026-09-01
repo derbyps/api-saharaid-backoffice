@@ -15,14 +15,6 @@ type ParticipantPayload = {
   job_company: string;
   education: string;
   cr_number: string;
-  passport_photo: string;
-  identity_card: string;
-  tax_number: string;
-  curiculum_vitae: string;
-  employment_certificate: string;
-  medical_certificate: string;
-  integrity_pact: string;
-  degree_certificate: string;
 };
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -51,14 +43,7 @@ function validateParticipantPayload(payload: unknown): ParticipantPayload | stri
     job_company: String(participant.job_company).trim(),
     education: String(participant.education).trim(),
     cr_number: String(participant.cr_number).trim(),
-    passport_photo: String(participant.passport_photo).trim(),
-    identity_card: String(participant.identity_card).trim(),
     tax_number: String(participant.tax_number).trim(),
-    curiculum_vitae: String(participant.curiculum_vitae).trim(),
-    employment_certificate: String(participant.employment_certificate).trim(),
-    medical_certificate: String(participant.medical_certificate).trim(),
-    integrity_pact: String(participant.integrity_pact).trim(),
-    degree_certificate: String(participant.degree_certificate).trim(),
   };
 }
 
