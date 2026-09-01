@@ -84,7 +84,16 @@ export async function requireTokenClaims(
 
   try {
     return await verifyToken(token, expectedType);
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.name === "JWTExpired") {
+      return response(
+        401,
+        { error: "Token expired" },
+        "TOKEN_EXPIRED",
+        req,
+      );
+    }
+
     return response(
       401,
       { error: "Invalid or expired token" },
