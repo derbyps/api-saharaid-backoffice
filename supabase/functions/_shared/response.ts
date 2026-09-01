@@ -1,5 +1,5 @@
 export function getCorsHeaders(req?: Request): Record<string, string> {
-    const origin = req?.headers.get("origin") ?? "*";
+    const origin = "*";
 
     return {
         "Access-Control-Allow-Origin": origin,
