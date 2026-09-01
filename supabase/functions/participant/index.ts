@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
 
       if (idParam) {
         if (!isUuid(idParam)) {
-          return response(400, { error: "id must be a UUID" }, "INVALID_REQUEST");
+          return response(400, { error: "id must be a UUID" }, "INVALID_REQUEST", req);
         }
 
         const { data: participant, error } = await supabase
@@ -75,14 +75,14 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (error) {
-          return response(500, { error: error.message }, "DATABASE_ERROR");
+          return response(500, { error: error.message }, "DATABASE_ERROR", req);
         }
 
         if (!participant) {
-          return response(404, { error: "Participant not found" }, "NOT_FOUND");
+          return response(404, { error: "Participant not found" }, "NOT_FOUND", req);
         }
 
-        return response(200, { participant });
+        return response(200, { participant }, undefined, req);
       }
 
       const { data: participants, error } = await supabase
@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
         .order("created_at", { ascending: true });
 
       if (error) {
-        return response(500, { error: error.message }, "DATABASE_ERROR");
+        return response(500, { error: error.message }, "DATABASE_ERROR", req);
       }
 
       return response(200, {
@@ -100,14 +100,14 @@ Deno.serve(async (req) => {
           index: index + 1,
           ...participant,
         })),
-      });
+      }, undefined, req);
     }
 
     if (req.method === "POST") {
       const payload = validateParticipantPayload(await req.json());
 
       if (typeof payload === "string") {
-        return response(400, { error: payload }, "INVALID_REQUEST");
+        return response(400, { error: payload }, "INVALID_REQUEST", req);
       }
 
       const { data: participant, error } = await supabase
@@ -123,10 +123,10 @@ Deno.serve(async (req) => {
       if (error) {
         const status = error.code === "23505" ? 409 : 500;
         const errCode = error.code === "23505" ? "PARTICIPANT_ALREADY_EXISTS" : "DATABASE_ERROR";
-        return response(status, { error: error.message }, errCode);
+        return response(status, { error: error.message }, errCode, req);
       }
 
-      return response(201, { participant });
+      return response(201, { participant }, undefined, req);
     }
 
     if (req.method === "DELETE") {
@@ -134,11 +134,11 @@ Deno.serve(async (req) => {
       const idParam = url.searchParams.get("id");
 
       if (!idParam) {
-        return response(400, { error: "id is required" }, "INVALID_REQUEST");
+        return response(400, { error: "id is required" }, "INVALID_REQUEST", req);
       }
 
       if (!isUuid(idParam)) {
-        return response(400, { error: "id must be a UUID" }, "INVALID_REQUEST");
+        return response(400, { error: "id must be a UUID" }, "INVALID_REQUEST", req);
       }
 
       const { data: participant, error } = await supabase
@@ -154,14 +154,14 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (error) {
-        return response(500, { error: error.message }, "DATABASE_ERROR");
+        return response(500, { error: error.message }, "DATABASE_ERROR", req);
       }
 
       if (!participant) {
-        return response(404, { error: "Participant not found" }, "NOT_FOUND");
+        return response(404, { error: "Participant not found" }, "NOT_FOUND", req);
       }
 
-      return response(200, { participant });
+      return response(200, { participant }, undefined, req);
     }
 
     if (req.method === "PUT") {
@@ -169,17 +169,17 @@ Deno.serve(async (req) => {
       const idParam = url.searchParams.get("id");
 
       if (!idParam) {
-        return response(400, { error: "id is required" }, "INVALID_REQUEST");
+        return response(400, { error: "id is required" }, "INVALID_REQUEST", req);
       }
 
       if (!isUuid(idParam)) {
-        return response(400, { error: "id must be a UUID" }, "INVALID_REQUEST");
+        return response(400, { error: "id must be a UUID" }, "INVALID_REQUEST", req);
       }
 
       const payload = validateParticipantPayload(await req.json());
 
       if (typeof payload === "string") {
-        return response(400, { error: payload }, "INVALID_REQUEST");
+        return response(400, { error: payload }, "INVALID_REQUEST", req);
       }
 
       const { data: participant, error } = await supabase
@@ -195,17 +195,17 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (error) {
-        return response(500, { error: error.message }, "DATABASE_ERROR");
+        return response(500, { error: error.message }, "DATABASE_ERROR", req);
       }
 
       if (!participant) {
-        return response(404, { error: "Participant not found" }, "NOT_FOUND");
+        return response(404, { error: "Participant not found" }, "NOT_FOUND", req);
       }
 
-      return response(200, { participant });
+      return response(200, { participant }, undefined, req);
     }
 
-    return response(405, { error: "Method not allowed" }, "METHOD_NOT_ALLOWED");
+    return response(405, { error: "Method not allowed" }, "METHOD_NOT_ALLOWED", req);
   } catch (err) {
     return response(
       500,
@@ -213,6 +213,7 @@ Deno.serve(async (req) => {
         error: err instanceof Error ? err.message : "Internal server error",
       },
       "INTERNAL_SERVER_ERROR",
+      req,
     );
   }
 });
