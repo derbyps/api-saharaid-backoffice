@@ -40,11 +40,23 @@ verify_jwt = false
 import_map = "./functions/course_mode/deno.json"
 entrypoint = "./functions/course_mode/index.ts"
 
+[functions.course_theme]
+enabled = true
+verify_jwt = false
+import_map = "./functions/course_theme/deno.json"
+entrypoint = "./functions/course_theme/index.ts"
+
 [functions.course]
 enabled = true
 verify_jwt = false
 import_map = "./functions/course/deno.json"
 entrypoint = "./functions/course/index.ts"
+
+[functions.instructor]
+enabled = true
+verify_jwt = false
+import_map = "./functions/instructor/deno.json"
+entrypoint = "./functions/instructor/index.ts"
 
 [functions.schedule]
 enabled = true
